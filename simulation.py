@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 
 class Simulate:
-    def __init__(self, pixelsPerUnit: int=50):
+    def __init__(self, observedPixels: int=50, pixelsPerUnit: int=50):
         self.X = 0  # Starting X
         self.Y = 0  # Starting Y
         self.sigmaMovement = 1  # Standard deviation of movement
@@ -11,6 +11,7 @@ class Simulate:
         self.dXY = []
         self.pos = [(self.X, self.Y)]
         self.ppu = pixelsPerUnit
+        self.observedPixels = observedPixels
 
         self.indicatorColor = (0, 0, 255) # BGR format for OpenCV
         self.indicatorRadius = 5
@@ -30,12 +31,39 @@ class Simulate:
 
         self.X += int(dX * self.ppu)
         self.Y += int(dY * self.ppu)
-        self.pos.append((self.X, self.Y))
-        self.dXY.append((dX, dY))
 
-        #self.X += int(np.random.uniform(0, self.sigmaMovement ** 2) * self.ppu)
-        #self.Y += int(np.random.uniform(0, self.sigmaMovement ** 2) * self.ppu)
-        #print(f"X: {self.X}, Y: {self.Y}")
+        self.X += int(np.random.uniform(0, self.sigmaMovement ** 2) * self.ppu)
+        self.Y += int(np.random.uniform(0, self.sigmaMovement ** 2) * self.ppu)
+
+        self.dXY.append((dX, dY))
+        self.pos.append((self.X, self.Y))
+        print(f"X: {self.X}, Y: {self.Y}")
+
+        self.droneView = self.getDroneView(self.X, self.Y)
+
+
+    def setViewSize(self, size: int=25):
+        self.observedPixels = size
+
+
+    def getDroneRef(self) -> np.ndarray:
+        pX = int(sum([x * self.ppu for (x, y) in self.dXY]))
+        pY = int(sum([y * self.ppu for (x, y) in self.dXY]))
+        return self.getDroneView(pX, pY)
+
+
+    def getDroneEnv(self) -> np.ndarray:
+        return self.getDroneView(self.X, self.Y)
+
+
+    def getDroneView(self, X: int, Y: int) -> np.ndarray:
+        """
+
+        """
+        droneView = self.environment.copy()
+        X, Y = self.convertCoordinates(X, Y)
+        return droneView[Y - (self.observedPixels // 2) : Y + (self.observedPixels // 2), 
+                         X - (self.observedPixels // 2) : X + (self.observedPixels // 2)]
 
 
     def inBounds(self, dX: float, dY: float) -> bool:
@@ -62,8 +90,18 @@ class Simulate:
 
             for i in range(0, self.height):
                 for j in range(0, self.width):
-                    if i % self.ppu == 0 or j % self.ppu == 0:
-                        self.reference[i, j] = (255, 255, 255)
+                    options = {
+                        (True, True): (0, 255, 0),
+                        (True, False): (255, 255, 255),
+                        (False, True): (255, 255, 255),
+                        (False, False): (0, 0, 0),
+                    }
+
+                    # x, y = self.convertCoordinates(i, j)
+                    case = (i % self.ppu == 0, j % self.ppu == 0)
+                    self.reference[i, j] = options[case]
+
+                    
 
         else:
             raise FileNotFoundError("Map file not found.")
@@ -108,14 +146,22 @@ class Simulate:
             cv2.circle(environment, 
                        self.convertCoordinates(X, Y), 
                        self.indicatorRadius + 3, (255, 255, 255), -1)
-
             cv2.circle(reference, 
                        self.convertCoordinates(X, Y), 
                        self.indicatorRadius, indicatorColor, -1)
             cv2.circle(environment, 
                        self.convertCoordinates(X, Y), 
                        self.indicatorRadius, indicatorColor, -1)
+        
+        aX = int(sum([x * self.ppu for (x, y) in self.dXY]))
+        aY = int(sum([y * self.ppu for (x, y) in self.dXY]))
 
+        cv2.circle(reference, 
+                   self.convertCoordinates(aX, aY), 
+                   self.indicatorRadius, (0, 255, 0), -1)
+        cv2.circle(environment, 
+                   self.convertCoordinates(aX, aY), 
+                   self.indicatorRadius, (0, 255, 0), -1)
 
         savepath = os.path.join(os.getcwd(), "output")
         cv2.imwrite(os.path.join(savepath, "ref.png"), reference)
