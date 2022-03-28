@@ -21,14 +21,16 @@ class ParticleFilter:
         """
 
         """
-        return np.sum(np.absolute(np.subtract(reference, expected)))
+        return 1.0 - np.tanh(np.sum(np.absolute(np.subtract(ref, exp))))
 
+    def similarityComponentAnalysis(self, ref: np.ndarray, exp: np.ndarray) -> float:
+        pass
 
     def similarityML(self, ref: np.ndarray, exp: np.ndarray) -> float:
         pass
 
-    def weightedSampling(self, points: list((int, int))) -> list(float):
+    def weightedSampling(self, points: [(int, int)]) -> [float]:
         pass
 
-    def movePoints(self, points: list((int, int)), dX: float, dY: float) -> list((int, int)):
+    def movePoints(self, points: [(int, int)], dX: float, dY: float) -> [(int, int)]:
         return points

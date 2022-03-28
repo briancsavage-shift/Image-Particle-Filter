@@ -6,7 +6,7 @@ from simulation import Simulate
 from filter import ParticleFilter
 
 def main():
-    st.set_page_config(page_title="Scraping Launcher",
+    st.set_page_config(page_title="Particle Filter Simulation",
                        page_icon="🚀",
                        layout="wide",
                        initial_sidebar_state="expanded")
@@ -18,13 +18,15 @@ def main():
     with st.sidebar:
         st.markdown("## Drone View")
         left, right = st.columns(2)
+        simHR = st.empty()
+        simML = st.empty()
 
         st.markdown("-----------")
         st.markdown("## Settings")
         mapOptions = os.listdir(os.path.join(os.getcwd(), "maps"))
         mapSelected = st.sidebar.selectbox("Map of Environment", mapOptions)
         
-        size = st.slider("Size of Observered", 25, 100, 25)
+        size = st.slider("Size of Observered", 25, 100, 75)
         st.session_state["Simulation"].loadMap(os.path.join(os.getcwd(), "maps", mapSelected))
         st.session_state["Simulation"].setViewSize(size)
 
@@ -35,17 +37,22 @@ def main():
         posX = st.session_state["Simulation"].X
         posY = st.session_state["Simulation"].Y
         
-        left.image(cv2.cvtColor(st.session_state["Simulation"].getDroneRef(), cv2.COLOR_BGR2RGB))
+        ref = st.session_state["Simulation"].getDroneRef()
+        ref = cv2.applyColorMap(ref, cv2.COLORMAP_JET)
+        left.image(cv2.cvtColor(ref, cv2.COLOR_BGR2RGB))
         right.image(cv2.cvtColor(st.session_state["Simulation"].getDroneEnv(), cv2.COLOR_BGR2RGB))
-
-
 
 
     flt = ParticleFilter(simulation=st.session_state["Simulation"])
     flt.generatePoints()
-    sim = flt.similarityHeuristic(reference=st.session_state["Simulation"].getDroneRef(), 
-                                  expected=st.session_state["Simulation"].getDroneEnv())  
-    print('Similarity', sim)
+    sH = flt.similarityHeuristic(ref=st.session_state["Simulation"].getDroneRef(), 
+                                 exp=st.session_state["Simulation"].getDroneEnv())  
+    cH = flt.similarityHeuristic(ref=st.session_state["Simulation"].getDroneRef(), 
+                                 exp=st.session_state["Simulation"].getDroneRef())  
+
+
+    simHR.markdown(f"### Similarity Heuristic: `{sH}`")
+    simML.markdown(f"### Similarity Check: `{cH}`")
 
     (ref, env) = st.session_state["Simulation"].export()
 

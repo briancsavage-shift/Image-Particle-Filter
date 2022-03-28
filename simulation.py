@@ -6,7 +6,7 @@ class Simulate:
     def __init__(self, observedPixels: int=50, pixelsPerUnit: int=50):
         self.X = 0  # Starting X
         self.Y = 0  # Starting Y
-        self.sigmaMovement = 1  # Standard deviation of movement
+        self.sigmaMovement = 0.5  # Standard deviation of movement
 
         self.dXY = []
         self.pos = [(self.X, self.Y)]
@@ -42,7 +42,7 @@ class Simulate:
         self.droneView = self.getDroneView(self.X, self.Y)
 
 
-    def setViewSize(self, size: int=25):
+    def setViewSize(self, size: int=25) -> None:
         self.observedPixels = size
 
 
