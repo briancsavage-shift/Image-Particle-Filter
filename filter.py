@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 from simulation import Simulate
 
 class ParticleFilter:
@@ -21,8 +22,14 @@ class ParticleFilter:
         """
 
         """
-        return 1.0 - np.tanh(np.sum(np.absolute(np.subtract(ref, exp))))
-
+        histRef = cv2.calcHist(ref,[0],None,[256],[0,256])
+        histExp = cv2.calcHist(exp,[0],None,[256],[0,256])
+        
+        MSE = np.power((histRef - histExp), 2).mean()
+        return np.divide(1, MSE) if MSE != 0.0 else 1.0
+    
+        
+            
     def similarityComponentAnalysis(self, ref: np.ndarray, exp: np.ndarray) -> float:
         pass
 

@@ -34,12 +34,8 @@ def main():
         st.button("Timestep +1", on_click=st.session_state["Simulation"].timestep)
         st.button("Reset Simulation", on_click=st.session_state["Simulation"].reset)
         st.button("Export Images", on_click=st.session_state["Simulation"].export)
-        posX = st.session_state["Simulation"].X
-        posY = st.session_state["Simulation"].Y
         
-        ref = st.session_state["Simulation"].getDroneRef()
-        ref = cv2.applyColorMap(ref, cv2.COLORMAP_JET)
-        left.image(cv2.cvtColor(ref, cv2.COLOR_BGR2RGB))
+        left.image(cv2.cvtColor(st.session_state["Simulation"].getDroneRef(), cv2.COLOR_BGR2RGB))
         right.image(cv2.cvtColor(st.session_state["Simulation"].getDroneEnv(), cv2.COLOR_BGR2RGB))
 
 
@@ -51,25 +47,31 @@ def main():
                                  exp=st.session_state["Simulation"].getDroneRef())  
 
 
-    simHR.markdown(f"### Similarity Heuristic: `{sH}`")
-    simML.markdown(f"### Similarity Check: `{cH}`")
+    simHR.markdown(f"`-------Similarity-Heuristic\n {round(sH, 4)}`")
+    simML.markdown(f"`Similarity-Machine-Learning\n {cH}`")
 
     (ref, env) = st.session_state["Simulation"].export()
 
-    st.write(":eight_spoked_asterisk: *Sum of Movement Vectors*")
-    st.write(":red_circle: *Actual Current Position*")
+
+    st.title("Drone Simulation")
+    st.write(":eight_spoked_asterisk: *Estimated Position*")
+    st.write(":red_circle: *Actual Positions*")
 
     left, right = st.columns(2)
+    left.markdown("`Drone Position`")
+    right.markdown("`Map Overlayed`")
     left.image(cv2.cvtColor(ref, cv2.COLOR_BGR2RGB))
     right.image(cv2.cvtColor(env, cv2.COLOR_BGR2RGB))
 
     left, right = st.columns(2)
+    left.markdown("`Actual Position Coordinates`")
+    right.markdown("`Only Movement Vectors`")
     df = pd.DataFrame(st.session_state["Simulation"].dXY, columns=["dX", "dY"])
     right.write(df.assign(constraint=df.dX ** 2 + df.dY ** 2))
     left.write(pd.DataFrame(st.session_state["Simulation"].pos, columns=["X", "Y"]))
     
-
-
+    st.markdown("-------")
+    st.title("Particle Filter")
 
 
 
