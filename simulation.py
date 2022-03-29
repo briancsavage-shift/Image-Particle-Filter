@@ -46,12 +46,16 @@ class Simulate:
     def setViewSize(self, size: int = 25) -> None:
         self.observedPixels = size
 
-    def getDroneRef(self) -> np.ndarray:
-        pX = int(sum([x * self.ppu for (x, y) in self.dXY]))
-        pY = int(sum([y * self.ppu for (x, y) in self.dXY]))
-        return self.getDroneView(pX, pY)
+    def estimatedPosition(self) -> (int, int):
+        eX = int(sum([x * self.ppu for (x, _) in self.dXY]))
+        eY = int(sum([y * self.ppu for (_, y) in self.dXY]))
+        return (eX, eY)
 
-    def getDroneEnv(self) -> np.ndarray:
+    def estimatedView(self) -> np.ndarray:
+        (eX, eY) = self.estimatedPosition()
+        return self.getDroneView(eX, eY)
+
+    def trueView(self) -> np.ndarray:
         return self.getDroneView(self.X, self.Y)
 
     def getDroneView(self, X: int, Y: int) -> np.ndarray:
@@ -75,6 +79,13 @@ class Simulate:
             f"Checking nX: {nX}, nY: {nY} against width: {self.width}, height: {self.height}")
         return (nX >= 0 and nX < self.width) and (nY >= 0 and nY < self.height)
 
+    def convertCoordinates(self, X: int, Y: int) -> (int, int):
+        """
+
+        """
+        return (X + (self.width // 2), Y + (self.height // 2))
+    
+    
     def loadMap(self, filepath: str = None) -> None:
         """
 
@@ -101,11 +112,6 @@ class Simulate:
         else:
             raise FileNotFoundError("Map file not found.")
 
-    def convertCoordinates(self, X: int, Y: int) -> (int, int):
-        """
-
-        """
-        return (X + (self.width // 2), Y + (self.height // 2))
 
     def export(self) -> None:
         """
@@ -148,8 +154,7 @@ class Simulate:
                        self.convertCoordinates(X, Y),
                        self.indicatorRadius, indicatorColor, -1)
 
-        aX = int(sum([x * self.ppu for (x, y) in self.dXY]))
-        aY = int(sum([y * self.ppu for (x, y) in self.dXY]))
+        (aX, aY) = self.estimatedPosition()
 
         cv2.circle(reference,
                    self.convertCoordinates(aX, aY),

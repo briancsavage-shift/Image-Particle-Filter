@@ -35,20 +35,22 @@ def main():
         st.button("Reset Simulation", on_click=st.session_state["Simulation"].reset)
         st.button("Export Images", on_click=st.session_state["Simulation"].export)
         
-        left.image(cv2.cvtColor(st.session_state["Simulation"].getDroneRef(), cv2.COLOR_BGR2RGB))
-        right.image(cv2.cvtColor(st.session_state["Simulation"].getDroneEnv(), cv2.COLOR_BGR2RGB))
+        left.markdown("`Expected View`")
+        right.markdown("`Actual View`")
+        left.image(cv2.cvtColor(st.session_state["Simulation"].estimatedView(), cv2.COLOR_BGR2RGB))
+        right.image(cv2.cvtColor(st.session_state["Simulation"].trueView(), cv2.COLOR_BGR2RGB))
 
 
-    flt = ParticleFilter(simulation=st.session_state["Simulation"])
-    flt.generatePoints()
-    sH = flt.similarityHeuristic(ref=st.session_state["Simulation"].getDroneRef(), 
-                                 exp=st.session_state["Simulation"].getDroneEnv())  
-    cH = flt.similarityHeuristic(ref=st.session_state["Simulation"].getDroneRef(), 
-                                 exp=st.session_state["Simulation"].getDroneRef())  
+    filter = ParticleFilter(simulation=st.session_state["Simulation"])
+    (eX, eY) = st.session_state["Simulation"].estimatedPosition()
+    images = filter.sense(eX, eY)
+    
+    
 
 
-    simHR.markdown(f"`-------Similarity-Heuristic\n {round(sH, 4)}`")
-    simML.markdown(f"`Similarity-Machine-Learning\n {cH}`")
+
+    #simHR.markdown(f"`-------Similarity-Heuristic\n {round(sH, 4)}`")
+    #simML.markdown(f"`Similarity-Machine-Learning\n {cH}`")
 
     (ref, env) = st.session_state["Simulation"].export()
 
@@ -72,6 +74,10 @@ def main():
     
     st.markdown("-------")
     st.title("Particle Filter")
+    
+    locs = st.columns(len(images))
+    for loc, img in zip(locs, images):
+        loc.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
 
 
