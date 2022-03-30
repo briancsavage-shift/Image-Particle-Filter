@@ -9,7 +9,7 @@ class Simulate:
         self.Y = 0  # Starting Y
         self.sigmaMovement = 0.5  # Standard deviation of movement
 
-        self.dXY = []
+        self.dXY = [(0.0, 0.0)]
         self.pos = [(self.X, self.Y)]
         self.ppu = pixelsPerUnit
         self.observedPixels = observedPixels
@@ -75,8 +75,8 @@ class Simulate:
         nY = self.Y + int(dY * self.ppu)
 
         (nX, nY) = self.convertCoordinates(nX, nY)
-        print(
-            f"Checking nX: {nX}, nY: {nY} against width: {self.width}, height: {self.height}")
+        print(f"Checking nX: {nX}, nY: {nY} against width: "
+              + f"{self.width}, height: {self.height}")
         return (nX >= 0 and nX < self.width) and (nY >= 0 and nY < self.height)
 
     def convertCoordinates(self, X: int, Y: int) -> (int, int):

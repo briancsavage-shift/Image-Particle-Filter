@@ -43,7 +43,7 @@ def main():
 
     filter = ParticleFilter(simulation=st.session_state["Simulation"])
     (eX, eY) = st.session_state["Simulation"].estimatedPosition()
-    images = filter.sense(eX, eY)
+    imageR1, imageR2, imageM2 = filter.sense(eX, eY)
     
     
 
@@ -75,9 +75,15 @@ def main():
     st.markdown("-------")
     st.title("Particle Filter")
     
-    locs = st.columns(len(images))
-    for loc, img in zip(locs, images):
-        loc.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    l, m, r = st.columns(3)
+    l.markdown("`Post Weighting`")
+    m.markdown("`Resampling based on Weight`")
+    r.markdown("`Moved Resampled`")
+    
+    
+    l.image(cv2.cvtColor(imageR1, cv2.COLOR_BGR2RGB))
+    m.image(cv2.cvtColor(imageR2, cv2.COLOR_BGR2RGB))
+    r.image(cv2.cvtColor(imageM2, cv2.COLOR_BGR2RGB))
 
 
 
