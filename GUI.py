@@ -28,7 +28,7 @@ def main():
         
         size = st.slider("Size of Observered Region", 25, 100, 75)
         particleCount = st.slider("Number of Particle for Filter", 100, 500, 250)
-        maxNextGen = st.slider("Max Resampling Count", 1, 100, 75)
+        maxNextGen = st.slider("Max Particle Count", 100, 500, 250)
         rounds = st.slider("Number of Rounds for Filter", 1, 10, 3)
         
         st.session_state["Simulation"].loadMap(os.path.join(os.getcwd(), "maps", mapSelected))
