@@ -78,15 +78,19 @@ def main():
     st.title("Particle Filter")
     
     for i, imgSet in enumerate(images):
-        st.markdown(f"Round #{i + 1}")
+        st.markdown(f"### Round {i + 1}")
         l, m, r = st.columns(3)
         l.markdown("`Post Weighting`")
         m.markdown("`Resampling based on Weight`")
         r.markdown("`Moved Resampled`")
         imageR1, imageR2, imageM2 = imgSet
-        l.image(cv2.cvtColor(imageR1, cv2.COLOR_BGR2RGB))
-        m.image(cv2.cvtColor(imageR2, cv2.COLOR_BGR2RGB))
-        r.image(cv2.cvtColor(imageM2, cv2.COLOR_BGR2RGB))
+        
+        overlay = lambda sImg : cv2.addWeighted(sImg, 0.5, st.session_state["Simulation"].environment, 0.5, 0)
+        
+        
+        l.image(cv2.cvtColor(overlay(imageR1), cv2.COLOR_BGR2RGB))
+        m.image(cv2.cvtColor(overlay(imageR2), cv2.COLOR_BGR2RGB))
+        r.image(cv2.cvtColor(overlay(imageM2), cv2.COLOR_BGR2RGB))
         st.markdown("-------")
 
 
