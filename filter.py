@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import cv2
 from simulation import Simulate
@@ -9,7 +10,6 @@ class ParticleFilter:
         self.simulation = simulation
         self.maxNextGen = maxNextGen
         
-        self.saveThres = 0.2
 
     def sense(self, rounds: int) -> [(np.ndarray, np.ndarray, np.ndarray)]:
         
@@ -25,10 +25,9 @@ class ParticleFilter:
 
             sampled = []
             for r, (X, Y) in zip(weights, points):
-                if self.saveThres <= r:
-                    sampled.extend(self.resample(X, Y, r))
-
-            nPoints = sampled
+                sampled.extend(self.resample(X, Y, r))
+                
+            nPoints = random.choices(sampled, k=self.maxNextGen)
             eqSizes = [3] * len(sampled)
             imageR2 = self.drawPoints(eqSizes,
                                     sampled, 

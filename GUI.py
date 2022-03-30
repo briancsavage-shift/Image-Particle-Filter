@@ -24,7 +24,7 @@ def main():
         st.markdown("-----------")
         st.markdown("## Settings")
         mapOptions = os.listdir(os.path.join(os.getcwd(), "maps"))
-        mapSelected = st.sidebar.selectbox("Map of Environment", mapOptions)
+        mapSelected = st.sidebar.selectbox("Map of Environment", sorted(mapOptions))
         
         size = st.slider("Size of Observered Region", 25, 100, 75)
         particleCount = st.slider("Number of Particle for Filter", 100, 500, 250)
