@@ -170,4 +170,4 @@ class Simulate:
 
     def reset(self):
         self.pos = [(0, 0)]
-        self.dXY = []
+        self.dXY = [(0.0, 0.0)]

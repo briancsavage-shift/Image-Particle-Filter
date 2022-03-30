@@ -4,31 +4,45 @@ from simulation import Simulate
 
 
 class ParticleFilter:
-    def __init__(self, sampleSize: int = 250, simulation: Simulate = None):
+    def __init__(self, sampleSize: int = 250, maxNextGen: int=100, simulation: Simulate = None):
         self.sampleSize = sampleSize
         self.simulation = simulation
+        self.maxNextGen = maxNextGen
+        
+        self.saveThres = 0.2
 
-    def sense(self, estX, estY):
+    def sense(self, rounds: int) -> [(np.ndarray, np.ndarray, np.ndarray)]:
+        
+        images = []
         points = self.generatePoints()
+        for _ in range(rounds):
+            
 
-        weights = self.weightedSampling(points)
-        imageR1 = self.drawPoints(
-            weights, points, self.simulation.reference.copy())
+            weights = self.weightedSampling(points)
+            imageR1 = self.drawPoints(weights, 
+                                    points, 
+                                    self.simulation.reference.copy())
 
-        sampled = []
-        for r, (X, Y) in zip(weights, points):
-            sampled.extend(self.resample(X, Y, r))
+            sampled = []
+            for r, (X, Y) in zip(weights, points):
+                if self.saveThres <= r:
+                    sampled.extend(self.resample(X, Y, r))
 
-        nPoints = sampled
-        eqSizes = [3] * len(sampled)
-        imageR2 = self.drawPoints(
-            eqSizes, sampled, self.simulation.reference.copy())
+            nPoints = sampled
+            eqSizes = [3] * len(sampled)
+            imageR2 = self.drawPoints(eqSizes,
+                                    sampled, 
+                                    self.simulation.reference.copy())
 
-        moved = self.movePoints(nPoints)
-        imageM1 = self.drawMoves(
-            sampled, moved, self.simulation.reference.copy())
+            moved = self.movePoints(nPoints)
+            points = moved
+            imageM1 = self.drawMoves(sampled, 
+                                    moved, 
+                                    self.simulation.reference.copy())
+            images.append((imageR1, imageR2, imageM1))
+            
 
-        return imageR1, imageR2, imageM1
+        return images
 
     def drawMoves(self, 
                   before: [(int, int)], 
@@ -47,20 +61,20 @@ class ParticleFilter:
         """
         points = []
         for _ in range(self.sampleSize):
-            rX = np.random.uniform(
-                self.simulation.width // -2, self.simulation.width // 2)
-            rY = np.random.uniform(
-                self.simulation.height // -2, self.simulation.height // 2)
+            rX = np.random.uniform(self.simulation.width // -2, 
+                                   self.simulation.width // 2)
+            rY = np.random.uniform(self.simulation.height // -2, 
+                                   self.simulation.height // 2)
             points.append((int(rX), int(rY)))
         return points
 
     def weightedSampling(self, points: [(int, int)]) -> [int]:
         weights = []
-        est = self.simulation.estimatedView()
+        est = self.simulation.trueView()
         for (X, Y) in points:
             ref = self.simulation.getDroneView(X, Y)
             scr = self.similarityHeuristic(ref, est)
-            radius = int(scr * 100)
+            radius = int(scr * self.maxNextGen)
             weights.append(radius)
         return weights
 

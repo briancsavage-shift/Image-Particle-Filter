@@ -26,10 +26,13 @@ def main():
         mapOptions = os.listdir(os.path.join(os.getcwd(), "maps"))
         mapSelected = st.sidebar.selectbox("Map of Environment", mapOptions)
         
-        size = st.slider("Size of Observered", 25, 100, 75)
+        size = st.slider("Size of Observered Region", 25, 100, 75)
+        particleCount = st.slider("Number of Particle for Filter", 100, 500, 250)
+        maxNextGen = st.slider("Max Resampling Count", 1, 100, 75)
+        rounds = st.slider("Number of Rounds for Filter", 1, 10, 3)
+        
         st.session_state["Simulation"].loadMap(os.path.join(os.getcwd(), "maps", mapSelected))
         st.session_state["Simulation"].setViewSize(size)
-
 
         st.button("Timestep +1", on_click=st.session_state["Simulation"].timestep)
         st.button("Reset Simulation", on_click=st.session_state["Simulation"].reset)
@@ -41,16 +44,15 @@ def main():
         right.image(cv2.cvtColor(st.session_state["Simulation"].trueView(), cv2.COLOR_BGR2RGB))
 
 
-    filter = ParticleFilter(simulation=st.session_state["Simulation"])
-    (eX, eY) = st.session_state["Simulation"].estimatedPosition()
-    imageR1, imageR2, imageM2 = filter.sense(eX, eY)
+    filter = ParticleFilter(sampleSize=particleCount, 
+                            maxNextGen=maxNextGen, 
+                            simulation=st.session_state["Simulation"])
     
-    
+    # (eX, eY) = st.session_state["Simulation"].estimatedPosition()
+    images = filter.sense(rounds=rounds)
 
-
-
-    #simHR.markdown(f"`-------Similarity-Heuristic\n {round(sH, 4)}`")
-    #simML.markdown(f"`Similarity-Machine-Learning\n {cH}`")
+    # simHR.markdown(f"`-------Similarity-Heuristic\n {round(sH, 4)}`")
+    # simML.markdown(f"`Similarity-Machine-Learning\n {cH}`")
 
     (ref, env) = st.session_state["Simulation"].export()
 
@@ -75,15 +77,17 @@ def main():
     st.markdown("-------")
     st.title("Particle Filter")
     
-    l, m, r = st.columns(3)
-    l.markdown("`Post Weighting`")
-    m.markdown("`Resampling based on Weight`")
-    r.markdown("`Moved Resampled`")
-    
-    
-    l.image(cv2.cvtColor(imageR1, cv2.COLOR_BGR2RGB))
-    m.image(cv2.cvtColor(imageR2, cv2.COLOR_BGR2RGB))
-    r.image(cv2.cvtColor(imageM2, cv2.COLOR_BGR2RGB))
+    for i, imgSet in enumerate(images):
+        st.markdown(f"Round #{i + 1}")
+        l, m, r = st.columns(3)
+        l.markdown("`Post Weighting`")
+        m.markdown("`Resampling based on Weight`")
+        r.markdown("`Moved Resampled`")
+        imageR1, imageR2, imageM2 = imgSet
+        l.image(cv2.cvtColor(imageR1, cv2.COLOR_BGR2RGB))
+        m.image(cv2.cvtColor(imageR2, cv2.COLOR_BGR2RGB))
+        r.image(cv2.cvtColor(imageM2, cv2.COLOR_BGR2RGB))
+        st.markdown("-------")
 
 
 
