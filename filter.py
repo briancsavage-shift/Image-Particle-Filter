@@ -28,16 +28,17 @@ class ParticleFilter:
                 sampled.extend(self.resample(X, Y, r))
                 
             nPoints = random.choices(sampled, k=self.maxNextGen)
-            eqSizes = [3] * len(sampled)
+            
+            eqSizes = [3] * len(nPoints)
             imageR2 = self.drawPoints(eqSizes,
-                                    sampled, 
-                                    self.simulation.reference.copy())
+                                      sampled, 
+                                      self.simulation.reference.copy())
 
             moved = self.movePoints(nPoints)
             points = moved
-            imageM1 = self.drawMoves(sampled, 
-                                    moved, 
-                                    self.simulation.reference.copy())
+            imageM1 = self.drawMoves(nPoints, 
+                                     moved, 
+                                     self.simulation.reference.copy())
             images.append((imageR1, imageR2, imageM1))
             
 
