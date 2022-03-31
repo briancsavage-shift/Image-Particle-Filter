@@ -78,7 +78,7 @@ def main():
     st.title("Particle Filter")
     
     for i, imgSet in enumerate(images):
-        st.markdown(f"### Round {i + 1}")
+        st.markdown(f"### R{i + 1}")
         l, m, r = st.columns(3)
         l.markdown("`Post Weighting`")
         m.markdown("`Resampling based on Weight`")
