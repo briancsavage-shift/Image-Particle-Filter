@@ -3,3 +3,5 @@ Pillow
 streamlit
 numpy
 pandas
+sklearn
+scikit-image

@@ -4,6 +4,7 @@ import pandas as pd
 
 from simulation import Simulate
 from filter import ParticleFilter
+from extractor import PerspectiveSimularity
 
 def main():
     st.set_page_config(page_title="Particle Filter Simulation",
@@ -47,7 +48,7 @@ def main():
                             simulation=st.session_state["Simulation"])
     
     # (eX, eY) = st.session_state["Simulation"].estimatedPosition()
-    bestPoints, images = filter.sense(rounds=rounds)
+    (bestPoints, scores, images) = filter.sense(rounds=rounds)
     #bestPoints = st.session_state["Simulation"].convertCoordinates(eX, eY)
 
     # simHR.markdown(f"`-------Similarity-Heuristic\n {round(sH, 4)}`")
@@ -76,7 +77,7 @@ def main():
     st.markdown("-------")
     st.title("Particle Filter")
     
-    for i, (bP, imgSet) in enumerate(zip(bestPoints, images)):
+    for i, (bP, scr, imgSet) in enumerate(zip(bestPoints, scores, images)):
         st.markdown(f"### Round {i + 1}")
         l, m, r = st.columns(3)
         l.markdown("`Post Weighting`")
@@ -100,7 +101,10 @@ def main():
 
         l.image(imgR1)
         m.image(imgR2)
-        r.image(imgM2)
+        #r.image(imgM2)
+        r.markdown(f" **Heuristic Score**: `{round(scr, 6)}`")
+
+
         st.markdown("-------")
 
 

@@ -59,9 +59,6 @@ class Simulate:
         return self.getDroneView(self.X, self.Y)
 
     def getDroneView(self, X: int, Y: int) -> np.ndarray:
-        """
-
-        """
         droneView = self.environment.copy()
         X, Y = self.convertCoordinates(X, Y)
         return droneView[Y - (self.observedPixels // 2): Y + (self.observedPixels // 2),
