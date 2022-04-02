@@ -27,7 +27,6 @@ def main():
         mapSelected = st.sidebar.selectbox("Map of Environment", sorted(mapOptions))
         
         size = st.slider("Size of Observered Region", 25, 100, 75)
-        particleCount = st.slider("Number of Particle for Filter", 100, 500, 250)
         maxNextGen = st.slider("Max Particle Count", 100, 500, 250)
         rounds = st.slider("Number of Rounds for Filter", 1, 10, 3)
         
@@ -44,12 +43,12 @@ def main():
         right.image(cv2.cvtColor(st.session_state["Simulation"].trueView(), cv2.COLOR_BGR2RGB))
 
 
-    filter = ParticleFilter(sampleSize=particleCount, 
-                            maxNextGen=maxNextGen, 
+    filter = ParticleFilter(maxGenSize=maxNextGen, 
                             simulation=st.session_state["Simulation"])
     
     # (eX, eY) = st.session_state["Simulation"].estimatedPosition()
-    images = filter.sense(rounds=rounds)
+    bestPoints, images = filter.sense(rounds=rounds)
+    #bestPoints = st.session_state["Simulation"].convertCoordinates(eX, eY)
 
     # simHR.markdown(f"`-------Similarity-Heuristic\n {round(sH, 4)}`")
     # simML.markdown(f"`Similarity-Machine-Learning\n {cH}`")
@@ -77,8 +76,8 @@ def main():
     st.markdown("-------")
     st.title("Particle Filter")
     
-    for i, imgSet in enumerate(images):
-        st.markdown(f"### R{i + 1}")
+    for i, (bP, imgSet) in enumerate(zip(bestPoints, images)):
+        st.markdown(f"### Round {i + 1}")
         l, m, r = st.columns(3)
         l.markdown("`Post Weighting`")
         m.markdown("`Resampling based on Weight`")
@@ -87,10 +86,21 @@ def main():
         
         overlay = lambda sImg : cv2.addWeighted(sImg, 0.5, st.session_state["Simulation"].environment, 0.5, 0)
         
-        
-        l.image(cv2.cvtColor(overlay(imageR1), cv2.COLOR_BGR2RGB))
-        m.image(cv2.cvtColor(overlay(imageR2), cv2.COLOR_BGR2RGB))
-        r.image(cv2.cvtColor(overlay(imageM2), cv2.COLOR_BGR2RGB))
+        eX, eY = bP
+        eX, eY = st.session_state["Simulation"].convertCoordinates(eX, eY)
+        imgR1 = cv2.cvtColor(overlay(imageR1), cv2.COLOR_BGR2RGB)
+        imgR2 = cv2.cvtColor(overlay(imageR2), cv2.COLOR_BGR2RGB)
+        imgM2 = cv2.cvtColor(overlay(imageR2), cv2.COLOR_BGR2RGB)
+
+
+        imgR1 = cv2.circle(imgR1, (eX, eY), 5, (0, 0, 255), -1)
+        imgR2 = cv2.circle(imgR2, (eX, eY), 5, (0, 0, 255), -1)
+        imgM2 = cv2.circle(imgM2, (eX, eY), 5, (0, 0, 255), -1)
+
+
+        l.image(imgR1)
+        m.image(imgR2)
+        r.image(imgM2)
         st.markdown("-------")
 
 
