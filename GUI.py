@@ -28,8 +28,8 @@ def main():
         mapSelected = st.sidebar.selectbox("Map of Environment",
                                            sorted(mapOptions))
         
-        size = st.slider("Size of Observered Region", 25, 100, 75)
-        maxNextGen = st.slider("Max Particle Count", 100, 500, 250)
+        size = st.slider("Size of Observered Region", 25, 100, 50)
+        maxNextGen = st.slider("Max Particle Count", 100, 500, 150)
         rounds = st.slider("Number of Rounds for Filter", 1, 10, 3)
         
         st.session_state["Simulation"].loadMap(os.path.join(os.getcwd(),
