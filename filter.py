@@ -47,16 +47,16 @@ class ParticleFilter:
             points = nPoints
             images.append((imageR1, imageR2, imageM1))
             scores.append(self.score(positionEstimate=(maxWX, maxWY)))
-
         return (bestXY, scores, images)
 
     def senseWithLearning(self, rounds: int) -> Tuple[List[Tuple[int, int]],
                                                       List[np.ndarray],
                                                       List[np.ndarray]]:
-
         trainingData, trainingView = [], []
         for _ in range(rounds):
-            validPoints, validViews = self.validViews(self.generatePoints())
+            (validPoints, validViews) = self.validViews(self.generatePoints())
+
+            print(self.generatePoints())
             trainingData += validPoints
             trainingView += validViews
 
@@ -101,7 +101,6 @@ class ParticleFilter:
             points = nPoints
             images.append((imageR1, imageR2, imageM1))
             scores.append(self.score(positionEstimate=(maxWX, maxWY)))
-
         return (bestXY, scores, images)
 
     def drawMoves(self,
@@ -129,14 +128,15 @@ class ParticleFilter:
                    points: List[Tuple[int, int]]) -> Tuple[List[Tuple[int,
                                                                       int]],
                                                            List[np.ndarray]]:
-        validPoints, validViews = [], []
-        for p in points:
-            view = self.simulation.getDroneView(p[0], p[1])
+        print(points)
+        valid_points, valid_views = [], []
+        for (x, y) in points:
+            view = self.simulation.getDroneView(x, y)
             if view.shape[0] == self.simulation.observedPixels - 1 and \
                view.shape[1] == self.simulation.observedPixels - 1:
-                validPoints.append(p)
-                validViews.append(view)
-        return (validPoints, validViews)
+                valid_points.append((x, y))
+                valid_views.append(view)
+        return valid_points, valid_views
 
     def weightedSampling(self, points: List[Tuple[int, int]]) -> List[int]:
         weights = []

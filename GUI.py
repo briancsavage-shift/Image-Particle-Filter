@@ -28,7 +28,7 @@ def main():
         mapSelected = st.sidebar.selectbox("Map of Environment",
                                            sorted(mapOptions))
         
-        size = st.slider("Size of Observered Region", 25, 100, 50)
+        size = st.slider("Size of Observered Region", 25, 100, 75, step=2)
         maxNextGen = st.slider("Max Particle Count", 100, 500, 150)
         rounds = st.slider("Number of Rounds for Filter", 1, 10, 3)
         
