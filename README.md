@@ -8,6 +8,7 @@
 
 # Implementation & Method
 
+<img src="https://user-images.githubusercontent.com/47962267/161453030-69b3040a-175a-4d56-8db5-810d0f37ac44.png" width="70%">
 
 # Usage & Installation
 
