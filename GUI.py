@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from simulation import Simulate
 from filter import ParticleFilter
 
+
 def main():
     st.set_page_config(page_title="Particle Filter Simulation",
                        page_icon="🚀",
