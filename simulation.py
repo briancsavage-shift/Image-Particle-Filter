@@ -19,9 +19,6 @@ class Simulate:
         self.indicatorRadius = 5
 
     def timestep(self) -> None:
-        """
-
-        """
         dX = np.random.uniform(-1, 1)
         dY = np.sqrt(np.subtract(1, np.power(dX, 2))) * \
             np.random.choice([-1, 1])
