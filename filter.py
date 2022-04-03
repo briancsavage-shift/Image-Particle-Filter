@@ -2,22 +2,76 @@ import random
 import numpy as np
 import cv2
 
+from typing import List, Dict, Tuple
 from simulation import Simulate
-
+from extractor import PerspectiveSimularity
 
 class ParticleFilter:
     def __init__(self, maxGenSize: int = 100, simulation: Simulate = None):
         self.simulation = simulation
         self.maxGenSize = maxGenSize
+        self.fextractor = PerspectiveSimularity()
 
-    def sense(self, rounds: int) -> [(np.ndarray, np.ndarray, np.ndarray)]:
-        scores = []
-        bestXY = []
-        images = []
+    def senseWithHeuristic(self, rounds: int) -> Tuple[List[Tuple[int, int]],
+                                                       List[np.ndarray],
+                                                       List[np.ndarray]]:
+        bestXY, images, scores = [], [], []
         points = self.generatePoints()
 
         for _ in range(rounds):
-            weights = self.weightedSampling(points)
+            weights = self.weightedSampling(points)     # Weights sampled points
+            imageR1 = self.drawPoints(weights,
+                                      points,
+                                      self.simulation.reference.copy())
+
+            # Best estimate after weighted sampling
+            (maxWX, maxWY) = points[np.argmax(weights)]
+            imageR1 = self.drawMarker(maxWX, maxWY, imageR1)
+            bestXY.append((maxWX, maxWY))
+
+            sampled = []
+            for r, (X, Y) in zip(weights, points):
+                sampled.extend(self.resample(X, Y, r))   # Resampling on weights
+
+            nPoints = random.choices(sampled, k=self.maxGenSize)  # Equal weight
+            eqSizes = [3] * len(nPoints)          # Scale for rendering purposes
+            imageR2 = self.drawPoints(eqSizes,
+                                      sampled,
+                                      self.simulation.reference.copy())
+
+            moved = self.movePoints(nPoints)      # Shift points based on dX, dY
+            imageM1 = self.drawMoves(nPoints,
+                                     moved,
+                                     self.simulation.reference.copy())
+            points = nPoints
+            images.append((imageR1, imageR2, imageM1))
+            scores.append(self.score(positionEstimate=(maxWX, maxWY)))
+
+        return (bestXY, scores, images)
+
+    def senseWithLearning(self, rounds: int) -> Tuple[List[Tuple[int, int]],
+                                                      List[np.ndarray],
+                                                      List[np.ndarray]]:
+
+        trainingData, trainingView = [], []
+        for _ in range(rounds):
+            validPoints, validViews = self.validViews(self.generatePoints())
+            trainingData += validPoints
+            trainingView += validViews
+
+        distY = []
+        for i, (x, y) in enumerate(trainingData):
+            distY.append(self.score(positionEstimate=(x, y)))
+        self.fextractor.train(trainingView, distY)
+
+        bestXY = []
+        images = []
+        scores = []
+        points, views = self.validViews(self.generatePoints())
+
+        for _ in range(rounds):
+            print(f"Samples: {len(points)}")
+            weights = self.learnedSampling(points)
             imageR1 = self.drawPoints(weights,
                                       points,
                                       self.simulation.reference.copy())
@@ -30,9 +84,14 @@ class ParticleFilter:
             for r, (X, Y) in zip(weights, points):
                 sampled.extend(self.resample(X, Y, r))
 
-            # All equal weights
+            points, views = self.validViews(self.generatePoints())
+            sampled, views = self.validViews(sampled + points)
+
+
             nPoints = random.choices(sampled, k=self.maxGenSize)
-            eqSizes = [3] * len(nPoints)
+            nPoints = sampled
+
+            eqSizes = [8] * len(nPoints)
             imageR2 = self.drawPoints(eqSizes,
                                       sampled,
                                       self.simulation.reference.copy())
@@ -45,12 +104,11 @@ class ParticleFilter:
             images.append((imageR1, imageR2, imageM1))
             scores.append(self.score(positionEstimate=(maxWX, maxWY)))
 
-
         return (bestXY, scores, images)
 
     def drawMoves(self,
-                  before: [(int, int)],
-                  after: [(int, int)],
+                  before: List[Tuple[int, int]],
+                  after: List[Tuple[int, int]],
                   image: np.ndarray) -> np.ndarray:
 
         for (b, a) in zip(before, after):
@@ -59,7 +117,7 @@ class ParticleFilter:
             image = cv2.line(image, nB, nA, (128, 128, 30), 2)
         return image
 
-    def generatePoints(self) -> [(int, int)]:
+    def generatePoints(self) -> List[Tuple[int, int]]:
         points = []
         for _ in range(self.maxGenSize):
             rX = np.random.uniform(self.simulation.width // -2,
@@ -69,17 +127,40 @@ class ParticleFilter:
             points.append((int(rX), int(rY)))
         return points
 
-    def weightedSampling(self, points: [(int, int)]) -> [int]:
+    def validViews(self,
+                   points: List[Tuple[int, int]]) -> Tuple[List[Tuple[int,
+                                                                      int]],
+                                                           List[np.ndarray]]:
+        validPoints, validViews = [], []
+        for p in points:
+            view = self.simulation.getDroneView(p[0], p[1])
+            if view.shape[0] == self.simulation.observedPixels - 1 and \
+               view.shape[1] == self.simulation.observedPixels - 1:
+                validPoints.append(p)
+                validViews.append(view)
+        return (validPoints, validViews)
+
+    def weightedSampling(self, points: List[Tuple[int, int]]) -> List[int]:
         weights = []
         est = self.simulation.trueView()
         for (X, Y) in points:
             ref = self.simulation.getDroneView(X, Y)
-            scr = self.similarityHeuristic(ref, est)
-            radius = int(scr * self.maxGenSize)
+            wgt = self.similarityHeuristic(ref, est)
+            radius = int(wgt * self.maxGenSize)
             weights.append(radius)
         return weights
 
-    def resample(self, cX: int, cY: int, radius: int) -> [(int, int)]:
+    def learnedSampling(self, points: List[Tuple[int, int]]) -> List[int]:
+        testViews = []
+        print(points)
+        for (X, Y) in points:
+            testViews.append(self.simulation.getDroneView(X, Y))
+
+        (weights, smaxWeights) = self.fextractor.predict(testViews)
+
+        return [int(weight * 50) for weight in smaxWeights]
+
+    def resample(self, cX: int, cY: int, radius: int) -> List[Tuple[int, int]]:
         newPoints = []
         for _ in range(radius):
             aX = np.random.uniform(-radius, radius)
@@ -87,7 +168,10 @@ class ParticleFilter:
             newPoints.append((int(cX + aX), int(cY + aY)))
         return newPoints
 
-    def score(self, positionEstimate: (int, int)) -> float:
+    def scoreSet(self, points: List[Tuple[int, int]]) -> List[float]:
+        return [self.score(positionEstimate=p) for p in points]
+
+    def score(self, positionEstimate: Tuple[int, int]) -> float:
         (trueX, trueY) = (self.simulation.X, self.simulation.Y)
         (eposX, eposY) = positionEstimate
 
@@ -100,8 +184,6 @@ class ParticleFilter:
     @staticmethod
     def euclidean(trueX: int, trueY: int, eposX: int, eposY: int) -> float:
         return np.sqrt((trueX - eposX) ** 2 + (trueY - eposY) ** 2)
-
-
 
     @staticmethod
     def similarityHeuristic(ref: np.ndarray, exp: np.ndarray) -> float:
@@ -133,7 +215,8 @@ class ParticleFilter:
         """
         pass
 
-    def movePoints(self, points: [(int, int)]) -> [(int, int)]:
+    def movePoints(self, points: List[Tuple[int, int]]) -> List[Tuple[int,
+                                                                      int]]:
         mp = []
         (dX, dY) = self.simulation.dXY[-1]
         for (X, Y) in points:
@@ -143,8 +226,8 @@ class ParticleFilter:
         return mp
 
     def drawPoints(self,
-                   weights: [float],
-                   points: [(int, int)],
+                   weights: List[float],
+                   points: List[Tuple[int, int]],
                    image: np.ndarray) -> np.ndarray:
 
         for w, (X, Y) in zip(weights, points):

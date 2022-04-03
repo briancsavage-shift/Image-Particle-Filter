@@ -4,7 +4,6 @@ import pandas as pd
 
 from simulation import Simulate
 from filter import ParticleFilter
-from extractor import PerspectiveSimularity
 
 def main():
     st.set_page_config(page_title="Particle Filter Simulation",
@@ -48,7 +47,9 @@ def main():
                             simulation=st.session_state["Simulation"])
     
     # (eX, eY) = st.session_state["Simulation"].estimatedPosition()
-    (bestPoints, scores, images) = filter.sense(rounds=rounds)
+
+    (bestPoints2, scores2, images2) = filter.senseWithLearning(rounds=rounds)
+    (bestPoints, scores, images) = filter.senseWithHeuristic(rounds=rounds)
     #bestPoints = st.session_state["Simulation"].convertCoordinates(eX, eY)
 
     # simHR.markdown(f"`-------Similarity-Heuristic\n {round(sH, 4)}`")
@@ -77,12 +78,18 @@ def main():
     st.markdown("-------")
     st.title("Particle Filter")
     
-    for i, (bP, scr, imgSet) in enumerate(zip(bestPoints, scores, images)):
+    for i, (bP, scr, imgSet, bP2, scr2, imgSet2) in enumerate(zip(bestPoints,
+                                                                  scores,
+                                                                  images,
+                                                                  bestPoints2,
+                                                                  scores2,
+                                                                  images2)):
         st.markdown(f"### Round {i + 1}")
+        st.markdown(f"***Heuristic***")
         l, m, r = st.columns(3)
         l.markdown("`Post Weighting`")
         m.markdown("`Resampling based on Weight`")
-        r.markdown("`Moved Resampled`")
+        r.markdown("`Normalized Distance from True Position`")
         imageR1, imageR2, imageM2 = imgSet
         
         overlay = lambda sImg : cv2.addWeighted(sImg, 0.5, st.session_state["Simulation"].environment, 0.5, 0)
@@ -99,10 +106,34 @@ def main():
         imgM2 = cv2.circle(imgM2, (eX, eY), 5, (0, 0, 255), -1)
 
 
+
         l.image(imgR1)
         m.image(imgR2)
         #r.image(imgM2)
-        r.markdown(f" **Heuristic Score**: `{round(scr, 6)}`")
+        r.markdown(f" **Score**: `{round(scr, 6)}`")
+
+        st.markdown(f"***Machine Learning***")
+        l, m, r = st.columns(3)
+        l.markdown("`Post Weighting`")
+        m.markdown("`Resampling based on Weight`")
+        r.markdown("`Normalized Distance from True Position`")
+        imageR1, imageR2, imageM2 = imgSet2
+
+
+        eX, eY = bP2
+        eX, eY = st.session_state["Simulation"].convertCoordinates(eX, eY)
+        imgR1 = cv2.cvtColor(overlay(imageR1), cv2.COLOR_BGR2RGB)
+        imgR2 = cv2.cvtColor(overlay(imageR2), cv2.COLOR_BGR2RGB)
+        imgM2 = cv2.cvtColor(overlay(imageR2), cv2.COLOR_BGR2RGB)
+
+        imgR1 = cv2.circle(imgR1, (eX, eY), 5, (0, 0, 255), -1)
+        imgR2 = cv2.circle(imgR2, (eX, eY), 5, (0, 0, 255), -1)
+        imgM2 = cv2.circle(imgM2, (eX, eY), 5, (0, 0, 255), -1)
+
+        l.image(imgR1)
+        m.image(imgR2)
+        # r.image(imgM2)
+        r.markdown(f" **Score**: `{round(scr2, 6)}`")
 
 
         st.markdown("-------")
