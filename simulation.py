@@ -2,6 +2,7 @@ import os
 import numpy as np
 import cv2
 
+from typing import List, Tuple
 
 class Simulate:
     def __init__(self, observedPixels: int = 50, pixelsPerUnit: int = 50):
@@ -29,18 +30,14 @@ class Simulate:
             dX = np.random.uniform(-1, 1)
             dY = np.sqrt(np.subtract(1, np.power(dX, 2))) * \
                 np.random.choice([-1, 1])
-        print(f"dX: {dX}, dY: {dY}, constraint: {dX ** 2 + dY ** 2}")
 
         self.X += int(dX * self.ppu)
         self.Y += int(dY * self.ppu)
-
         self.X += int(np.random.uniform(0, self.sigmaMovement ** 2) * self.ppu)
         self.Y += int(np.random.uniform(0, self.sigmaMovement ** 2) * self.ppu)
 
         self.dXY.append((dX, dY))
         self.pos.append((self.X, self.Y))
-        print(f"X: {self.X}, Y: {self.Y}")
-
         self.droneView = self.getDroneView(self.X, self.Y)
 
     def setViewSize(self, size: int = 25) -> None:
@@ -56,7 +53,8 @@ class Simulate:
         return self.getDroneView(eX, eY)
 
     def trueView(self) -> np.ndarray:
-        return self.getDroneView(self.X, self.Y)
+        view = self.getDroneView(self.X, self.Y)
+        return cv2.GaussianBlur(view, (5, 5), 0)
 
     def getDroneView(self, X: int, Y: int) -> np.ndarray:
         droneView = self.environment.copy()
@@ -72,8 +70,6 @@ class Simulate:
         nY = self.Y + int(dY * self.ppu)
 
         (nX, nY) = self.convertCoordinates(nX, nY)
-        print(f"Checking nX: {nX}, nY: {nY} against width: "
-              + f"{self.width}, height: {self.height}")
         return (nX >= 0 and nX < self.width) and (nY >= 0 and nY < self.height)
 
     def convertCoordinates(self, X: int, Y: int) -> (int, int):
@@ -110,7 +106,7 @@ class Simulate:
             raise FileNotFoundError("Map file not found.")
 
 
-    def export(self) -> None:
+    def export(self) -> Tuple[np.ndarray, np.ndarray]:
         """
             @ Does
             - Generates a reference image for a particular position of the map.

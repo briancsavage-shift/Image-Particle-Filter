@@ -1,13 +1,19 @@
 import numpy as np
 import cv2
 
-from typing import List, Dict, Tuple
-
+from typing import List, Tuple
 from skimage.feature import hog
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
 from scipy.special import softmax
+
+
+"""
+    Adapted from Tutorial: 
+    https://kapernikov.com/tutorial-image-classification-with-scikit-learn/
+"""
+
 
 class FeatureExtractor(BaseEstimator, TransformerMixin):
     def __init__(self,
@@ -52,7 +58,6 @@ class PerspectiveSimularity:
         self.regressor = SGDRegressor(loss='squared_error',
                                       max_iter=1000,
                                       tol=1e-3)
-
         X = self.featureExtractor.fit_transform(X)
         self.regressor.fit(X, y)
 
@@ -60,7 +65,3 @@ class PerspectiveSimularity:
         X = self.featureExtractor.fit_transform(X)
         YHat = self.regressor.predict(X)
         return (YHat, softmax(YHat, axis=0))
-
-    @staticmethod
-    def score(reference: np.ndarray, expected: np.ndarray) -> float:
-        pass

@@ -2,7 +2,7 @@ import random
 import numpy as np
 import cv2
 
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 from simulation import Simulate
 from extractor import PerspectiveSimularity
 
@@ -13,11 +13,12 @@ class ParticleFilter:
         self.fextractor = PerspectiveSimularity()
 
     def senseWithHeuristic(self, rounds: int) -> Tuple[List[Tuple[int, int]],
-                                                       List[np.ndarray],
-                                                       List[np.ndarray]]:
+                                                       List[float],
+                                                       List[Tuple[np.ndarray,
+                                                                  np.ndarray,
+                                                                  np.ndarray]]]:
         bestXY, images, scores = [], [], []
         points = self.generatePoints()
-
         for _ in range(rounds):
             weights = self.weightedSampling(points)     # Weights sampled points
             imageR1 = self.drawPoints(weights,
@@ -64,13 +65,9 @@ class ParticleFilter:
             distY.append(self.score(positionEstimate=(x, y)))
         self.fextractor.train(trainingView, distY)
 
-        bestXY = []
-        images = []
-        scores = []
+        bestXY, images, scores = [], [], []
         points, views = self.validViews(self.generatePoints())
-
         for _ in range(rounds):
-            print(f"Samples: {len(points)}")
             weights = self.learnedSampling(points)
             imageR1 = self.drawPoints(weights,
                                       points,
@@ -84,12 +81,13 @@ class ParticleFilter:
             for r, (X, Y) in zip(weights, points):
                 sampled.extend(self.resample(X, Y, r))
 
-            points, views = self.validViews(self.generatePoints())
+            points, _ = self.validViews(self.generatePoints())
             sampled, views = self.validViews(sampled + points)
 
-
-            nPoints = random.choices(sampled, k=self.maxGenSize)
-            nPoints = sampled
+            if len(sampled) > self.maxGenSize:
+                nPoints = random.choices(sampled, k=self.maxGenSize)
+            else:
+                nPoints = sampled
 
             eqSizes = [8] * len(nPoints)
             imageR2 = self.drawPoints(eqSizes,
@@ -152,13 +150,10 @@ class ParticleFilter:
 
     def learnedSampling(self, points: List[Tuple[int, int]]) -> List[int]:
         testViews = []
-        print(points)
         for (X, Y) in points:
             testViews.append(self.simulation.getDroneView(X, Y))
-
         (weights, smaxWeights) = self.fextractor.predict(testViews)
-
-        return [int(weight * 50) for weight in smaxWeights]
+        return [int(weight * 20) for weight in smaxWeights]
 
     def resample(self, cX: int, cY: int, radius: int) -> List[Tuple[int, int]]:
         newPoints = []
@@ -178,7 +173,6 @@ class ParticleFilter:
         current = self.euclidean(trueX, trueY, eposX, eposY)
         maximum = self.euclidean(self.simulation.width,
                                  self.simulation.height, 0, 0)
-
         return 1.0 - (current / maximum)
 
     @staticmethod
