@@ -17,10 +17,10 @@
 # Implementation & Method
 
 | Code | Explaination |
-|:----:|:------------:|
-| <img src="https://user-images.githubusercontent.com/47962267/161453030-69b3040a-175a-4d56-8db5-810d0f37ac44.png"> | Yoooooooooooooooooooooooooooooooo |
-| <img src="https://user-images.githubusercontent.com/47962267/161453132-533e876d-238e-491a-8d18-cd67104f92a9.png"> | Yoooooooooooooooooooooooooooooooo |
-| <img src="https://user-images.githubusercontent.com/47962267/161453137-c529feef-248b-4ed3-8fd6-71354592d8a1.png"> | Yoooooooooooooooooooooooooooooooo |
+|:----:|:-------------|
+| <img src="https://user-images.githubusercontent.com/47962267/161453030-69b3040a-175a-4d56-8db5-810d0f37ac44.png"> | <b>Heuristical Estimator for Position</b> <br/><br/> <ul> First, calculates the histogram for the reference and expected perspective. This returns a dictionary where the keys are values between 0-255 and the keys represent the frequency counts of the BGR values. </ul></br><ul> Using these frequency counts, we calculate the mean squared error between the reference and expected color histograms. Then, we return 1 divided by the mean squared error of the reference image.  </ul> |
+| <img src="https://user-images.githubusercontent.com/47962267/161453132-533e876d-238e-491a-8d18-cd67104f92a9.png"> | <b>Hog Transformer</b> <br /> TODO |
+| <img src="https://user-images.githubusercontent.com/47962267/161453137-c529feef-248b-4ed3-8fd6-71354592d8a1.png"> | <b>Learning Based Estimator for Position</b> <br /> TODO |
 
 <br><br>
 
