@@ -9,7 +9,7 @@
 
 # Usage & Installation
 * [**Step 1**] - Get code via `git clone https://github.com/briancsavage/Image-Particle-Filter.git`
-* [**Step 2**] - Navigate to repository locally via `cd /path/to/clone`
+* [**Step 2**] - Navigate to repository locally via `cd /path/to/Image-Particle-Filter`
 * [**Step 3**] - Install dependencies via `pip install -r requirements.txt`
 * [**Step 4**] - Run Streamlit application locally via `streamlit run GUI.py`
 
